@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Анонимные обращения</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="gallery-header">
+            <div class="header-left">
+                <button class="btn-icon back-btn" onclick="goBack()">
+                    ←
+                </button>
+                <div class="gallery-brand">
+                    <span class="brand-icon">🕵️</span>
+                    <div>
+                        <h1>Анонимные обращения</h1>
+                        <p class="brand-subtitle">Confidential • Gallery 13</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn-icon" onclick="refreshComplaints()" title="Обновить">
+                    🔄
+                </button>
+                <button class="btn-icon" onclick="toggleFilters()" title="Фильтры">
+                    ⚙️
+                </button>
+            </div>
+        </header>
+
+        <!-- Информация о конфиденциальности -->
+        <div class="privacy-notice">
+            <div class="privacy-icon">🔒</div>
+            <div class="privacy-content">
+                <h3>Строго конфиденциально</h3>
+                <p>Эти обращения видят только администраторы Gallery 13. Авторство не раскрывается.</p>
+            </div>
+        </div>
+
+        <!-- Фильтры (скрыты по умолчанию) -->
+        <div class="filters-card" id="filters-container" style="display: none;">
+            <h3>Фильтры</h3>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Статус</label>
+                    <select id="filter-status">
+                        <option value="all">Все</option>
+                        <option value="new">Новые</option>
+                        <option value="in_progress">В работе</option>
+                        <option value="resolved">Решено</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Тип</label>
+                    <select id="filter-type">
+                        <option value="all">Все типы</option>
+                        <option value="complaint">Жалоба</option>
+                        <option value="suggestion">Предложение</option>
+                        <option value="emergency">Срочное</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Дата</label>
+                    <select id="filter-date">
+                        <option value="all">За все время</option>
+                        <option value="today">Сегодня</option>
+                        <option value="week">За неделю</option>
+                        <option value="month">За месяц</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="applyFilters()">
+                    Применить
+                </button>
+                <button class="btn btn-secondary" onclick="resetFilters()">
+                    Сбросить
+                </button>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-grid">
+            <div class="stat-card new">
+                <div class="stat-icon">🆕</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="new-count">0</span>
+                    <span class="stat-label">Новые</span>
+                </div>
+            </div>
+            
+            <div class="stat-card in-progress">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="progress-count">0</span>
+                    <span class="stat-label">В работе</span>
+                </div>
+            </div>
+            
+            <div class="stat-card total">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="total-count">0</span>
+                    <span class="stat-label">Всего</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список обращений -->
+        <div class="section-title">
+            <h2>📋 Список обращений</h2>
+            <p>Сортировка по дате (новые сверху)</p>
+        </div>
+
+        <div class="complaints-list" id="complaints-list">
+            <!-- Обращения загружаются динамически -->
+            <div class="loading-placeholder">
+                <div class="loading-spinner"></div>
+                <p>Загрузка обращений...</p>
+            </div>
+        </div>
+
+        <!-- Кнопка нового обращения -->
+        <div class="floating-action">
+            <button class="fab-btn" onclick="showNewComplaintForm()">
+                <span class="fab-icon">+</span>
+            </button>
+        </div>
+
+        <!-- Форма нового обращения (модальное) -->
+        <div class="modal-overlay" id="new-complaint-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📝 Новое обращение</h2>
+                    <button class="btn-icon" onclick="hideNewComplaintForm()">✕</button>
+                </div>
+                
+                <form id="new-complaint-form">
+                    <div class="form-group">
+                        <label>Тип обращения *</label>
+                        <select id="complaint-type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="complaint">Жалоба</option>
+                            <option value="suggestion">Предложение</option>
+                            <option value="emergency">Срочное сообщение</option>
+                            <option value="other">Другое</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Тема *</label>
+                        <input type="text" id="complaint-title" 
+                               placeholder="Кратко опишите суть" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Подробное описание *</label>
+                        <textarea id="complaint-description" 
+                                  placeholder="Опишите ситуацию подробно..." 
+                                  rows="6" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Зона/отдел</label>
+                        <select id="complaint-location">
+                            <option value="">Любая зона</option>
+                            <option value="main">Основной зал</option>
+                            <option value="vip">VIP зона</option>
+                            <option value="storage">Склад</option>
+                            <option value="office">Офис</option>
+                            <option value="all">Все Gallery 13</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Срочность</label>
+                        <div class="urgency-buttons">
+                            <button type="button" class="urgency-btn low" 
+                                    onclick="setUrgency('low')">Низкая</button>
+                            <button type="button" class="urgency-btn medium" 
+                                    onclick="setUrgency('medium')">Средняя</button>
+                            <button type="button" class="urgency-btn high" 
+                                    onclick="setUrgency('high')">Высокая</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Прикрепить фото (опционально)</label>
+                        <div class="photo-attachments" id="photo-attachments">
+                            <div class="add-photo-btn" onclick="addComplaintPhoto()">
+                                <span class="add-icon">+</span>
+                                <span>Добавить фото</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-footer">
+                        <p class="privacy-note">
+                            🔒 Ваше обращение будет полностью анонимным. 
+                            Администрация не увидит ваших данных.
+                        </p>
+                        
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" 
+                                    onclick="hideNewComplaintForm()">
+                                Отмена
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                📨 Отправить анонимно
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Детали обращения (модальное) -->
+        <div class="modal-overlay" id="complaint-detail-modal" style="display: none;">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="detail-title"></h2>
+                    <button class="btn-icon" onclick="hideComplaintDetail()">✕</button>
+                </div>
+                
+                <div class="complaint-detail">
+                    <div class="detail-header">
+                        <div class="detail-meta">
+                            <span class="detail-type" id="detail-type"></span>
+                            <span class="detail-date" id="detail-date"></span>
+                            <span class="detail-location" id="detail-location"></span>
+                        </div>
+                        <div class="detail-status" id="detail-status"></div>
+                    </div>
+                    
+                    <div class="detail-content">
+                        <h3>Описание</h3>
+                        <p id="detail-description"></p>
+                    </div>
+                    
+                    <div class="detail-photos" id="detail-photos">
+                        <!-- Фото загружаются динамически -->
+                    </div>
+                    
+                    <div class="detail-actions" id="detail-actions">
+                        <!-- Кнопки действий для админов -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Стили для страницы обращений */
+        .privacy-notice {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .privacy-icon {
+            font-size: 32px;
+        }
+
+        .privacy-content h3 {
+            margin-bottom: 8px;
+        }
+
+        .privacy-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .filters-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 12px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-left: 4px solid;
+        }
+
+        .stat-card.new {
+            border-left-color: #3B82F6;
+        }
+
+        .stat-card.in-progress {
+            border-left-color: #F59E0B;
+        }
+
+        .stat-card.total {
+            border-left-color: #8B5CF6;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .complaints-list {
+            margin-bottom: 80px;
+        }
+
+        .complaint-item {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid;
+        }
+
+        .complaint-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .complaint-item.new {
+            border-left-color: #3B82F6;
+            background: linear-gradient(135deg, var(--surface), #1e3a8a20);
+        }
+
+        .complaint-item.in-progress {
+            border-left-color: #F59E0B;
+        }
+
+        .complaint-item.resolved {
+            border-left-color: #10B981;
+            opacity: 0.8;
+        }
+
+        .complaint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .complaint-title {
+            font-weight: 600;
+            font-size: 16px;
+            flex: 1;
+        }
+
+        .complaint-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .complaint-type {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .complaint-type.complaint {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+
+        .complaint-type.suggestion {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+        }
+
+        .complaint-type.emergency {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+        }
+
+        .complaint-date {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .complaint-preview {
+            color: var(--text-secondary);
+            font-size: 14px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .complaint-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .complaint-location {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 4px 8px;
+            background: var(--surface-light);
+            border-radius: 12px;
+        }
+
+        .complaint-urgency {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .urgency-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+
+        .urgency-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+        }
+
+        .urgency-low {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3B82F6;
+        }
+
+        .loading-placeholder {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface-light);
+            border-top-color: var(--primary-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .floating-action {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+
+        .fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .fab-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Модальные окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .modal-content.large {
+            max-width: 800px;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .urgency-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .urgency-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .urgency-btn.active {
+            border-color: currentColor;
+            font-weight: 600;
+        }
+
+        .urgency-btn.low.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3B82F6;
+        }
+
+        .urgency-btn.medium.active {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+        }
+
+        .urgency-btn.high.active {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+
+        .photo-attachments {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .add-photo-btn {
+            width: 120px;
+            height: 120px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-photo-btn:hover {
+            border-color: var(--primary-purple);
+            background: var(--surface-light);
+        }
+
+        .add-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .form-footer {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .privacy-note {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Детали обращения */
+        .complaint-detail {
+            padding: 24px;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .detail-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-type {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .detail-date {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .detail-location {
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: var(--surface-light);
+            padding: 4px 12px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .detail-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .detail-status.new {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3B82F6;
+        }
+
+        .detail-status.in_progress {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+        }
+
+        .detail-status.resolved {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+        }
+
+        .detail-content {
+            margin-bottom: 24px;
+        }
+
+        .detail-content h3 {
+            margin-bottom: 12px;
+        }
+
+        .detail-content p {
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .detail-photo {
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--surface-light);
+        }
+
+        .detail-photo img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+    </style>
+
+    <script>
+        let currentUrgency = 'medium';
+        let complaints = [];
+        let currentFilters = {};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверка доступа
+            if (window.currentEmployee) {
+                const permissions = GALLERY13_CONFIG.permissions[window.currentEmployee.role];
+                if (!permissions.includes('complaints')) {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+            }
+
+            // Загрузка обращений
+            loadComplaints();
+            
+            // Обработка формы нового обращения
+            document.getElementById('new-complaint-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitNewComplaint();
+            });
+
+            // Обновляем статистику каждые 30 секунд
+            setInterval(updateStats, 30000);
+        });
+
+        function goBack() {
+            if (window.currentEmployee) {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function toggleFilters() {
+            const container = document.getElementById('filters-container');
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function applyFilters() {
+            currentFilters = {
+                status: document.getElementById('filter-status').value,
+                type: document.getElementById('filter-type').value,
+                date: document.getElementById('filter-date').value
+            };
+            loadComplaints();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-status').value = 'all';
+            document.getElementById('filter-type').value = 'all';
+            document.getElementById('filter-date').value = 'all';
+            currentFilters = {};
+            loadComplaints();
+        }
+
+        function setUrgency(urgency) {
+            currentUrgency = urgency;
+            
+            // Сбрасываем активный класс со всех кнопок
+            document.querySelectorAll('.urgency-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Добавляем активный класс к выбранной кнопке
+            const activeBtn = document.querySelector(`.urgency-btn.${urgency}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        function showNewComplaintForm() {
+            document.getElementById('new-complaint-modal').style.display = 'flex';
+            setUrgency('medium'); // Сбрасываем к среднему
+        }
+
+        function hideNewComplaintForm() {
+            document.getElementById('new-complaint-modal').style.display = 'none';
+            document.getElementById('new-complaint-form').reset();
+        }
+
+        function addComplaintPhoto() {
+            // Интеграция с камерой Telegram
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    title: 'Добавить фото',
+                    message: 'Вы можете прикрепить фото к обращению',
+                    buttons: [
+                        { type: 'default', text: 'Сделать фото' },
+                        { type: 'default', text: 'Выбрать из галереи' },
+                        { type: 'cancel', text: 'Отмена' }
+                    ]
+                });
+            }
+            
+            // Для демо
+            const container = document.getElementById('photo-attachments');
+            const photoDiv = document.createElement('div');
+            photoDiv.className = 'detail-photo';
+            photoDiv.innerHTML = `
+                <img src="https://via.placeholder.com/150/1e293b/8b5cf6?text=Photo" alt="Photo">
+            `;
+            container.appendChild(photoDiv);
+        }
+
+        function submitNewComplaint() {
+            const complaintData = {
+                type: document.getElementById('complaint-type').value,
+                title: document.getElementById('complaint-title').value,
+                description: document.getElementById('complaint-description').value,
+                location: document.getElementById('complaint-location').value,
+                urgency: currentUrgency,
+                timestamp: new Date().toISOString(),
+                status: 'new'
+            };
+
+            // Отправка анонимного обращения
+            sendToTelegram(complaintData);
+            
+            // Показываем подтверждение
+            showNotification('✅ Ваше обращение отправлено анонимно');
+            
+            // Закрываем форму
+            hideNewComplaintForm();
+            
+            // Обновляем список
+            setTimeout(loadComplaints, 1000);
+        }
+
+        function loadComplaints() {
+            // Показываем загрузку
+            const list = document.getElementById('complaints-list');
+            list.innerHTML = `
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div>
+                    <p>Загрузка обращений...</p>
+                </div>
+            `;
+
+            // Имитация загрузки с сервера
+            setTimeout(() => {
+                // Тестовые данные
+                complaints = [
+                    {
+                        id: 1,
+                        title: 'Недостаток канцелярии в офисе',
+                        description: 'В офисе закончились ручки, бумага и степлеры. Необходимо пополнить запасы.',
+                        type: 'suggestion',
+                        location: 'office',
+                        urgency: 'medium',
+                        status: 'new',
+                        date: '2024-01-14T10:30:00Z',
+                        photos: []
+                    },
+                    {
+                        id: 2,
+                        title: 'Сломанный стул в основном зале',
+                        description: 'В основном зале у окна сломался офисный стул. Опасность для сотрудников.',
+                        type: 'complaint',
+                        location: 'main',
+                        urgency: 'high',
+                        status: 'in_progress',
+                        date: '2024-01-13T15:45:00Z',
+                        photos: ['chair.jpg']
+                    },
+                    {
+                        id: 3,
+                        title: 'Предложение по улучшению освещения',
+                        description: 'В VIP зоне слишком тусклое освещение вечером. Предлагаю добавить дополнительные светильники.',
+                        type: 'suggestion',
+                        location: 'vip',
+                        urgency: 'low',
+                        status: 'resolved',
+                        date: '2024-01-12T09:20:00Z',
+                        photos: []
+                    }
+                ];
+
+                // Применяем фильтры
+                let filteredComplaints = [...complaints];
+                
+                if (currentFilters.status && currentFilters.status !== 'all') {
+                    filteredComplaints = filteredComplaints.filter(c => 
+                        c.status === currentFilters.status
+                    );
+                }
+                
+                if (currentFilters.type && currentFilters.type !== 'all') {
+                    filteredComplaints = filteredComplaints.filter(c => 
+                        c.type === currentFilters.type
+                    );
+                }
+                
+                if (currentFilters.date && currentFilters.date !== 'all') {
+                    const now = new Date();
+                    let cutoffDate = new Date();
+                    
+                    switch (currentFilters.date) {
+                        case 'today':
+                            cutoffDate.setHours(0, 0, 0, 0);
+                            break;
+                        case 'week':
+                            cutoffDate.setDate(now.getDate() - 7);
+                            break;
+                        case 'month':
+                            cutoffDate.setMonth(now.getMonth() - 1);
+                            break;
+                    }
+                    
+                    filteredComplaints = filteredComplaints.filter(c => 
+                        new Date(c.date) >= cutoffDate
+                    );
+                }
+
+                // Обновляем статистику
+                updateStats(filteredComplaints);
+
+                // Отображаем список
+                displayComplaints(filteredComplaints);
+            }, 1000);
+        }
+
+        function displayComplaints(complaintsList) {
+            const list = document.getElementById('complaints-list');
+            
+            if (complaintsList.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>Обращений нет</h3>
+                        <p>Нет обращений, соответствующих выбранным фильтрам</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = '';
+            
+            complaintsList.forEach(complaint => {
+                const complaintEl = document.createElement('div');
+                complaintEl.className = `complaint-item ${complaint.status}`;
+                complaintEl.innerHTML = `
+                    <div class="complaint-header">
+                        <div class="complaint-title">${complaint.title}</div>
+                        <div class="complaint-meta">
+                            <span class="complaint-type ${complaint.type}">
+                                ${getTypeLabel(complaint.type)}
+                            </span>
+                            <span class="complaint-date">
+                                ${formatDate(complaint.date)}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="complaint-preview">
+                        ${complaint.description.substring(0, 150)}...
+                    </div>
+                    
+                    <div class="complaint-footer">
+                        <span class="complaint-location">
+                            ${getLocationLabel(complaint.location)}
+                        </span>
+                        <span class="complaint-urgency urgency-${complaint.urgency}">
+                            ${getUrgencyLabel(complaint.urgency)}
+                        </span>
+                    </div>
+                `;
+                
+                complaintEl.addEventListener('click', () => {
+                    showComplaintDetail(complaint);
+                });
+                
+                list.appendChild(complaintEl);
+            });
+        }
+
+        function updateStats(complaintsList = complaints) {
+            const newCount = complaintsList.filter(c => c.status === 'new').length;
+            const progressCount = complaintsList.filter(c => c.status === 'in_progress').length;
+            const totalCount = complaintsList.length;
+            
+            document.getElementById('new-count').textContent = newCount;
+            document.getElementById('progress-count').textContent = progressCount;
+            document.getElementById('total-count').textContent = totalCount;
+        }
+
+        function showComplaintDetail(complaint) {
+            document.getElementById('detail-title').textContent = complaint.title;
+            document.getElementById('detail-type').textContent = getTypeLabel(complaint.type);
+            document.getElementById('detail-type').className = `detail-type ${complaint.type}`;
+            document.getElementById('detail-date').textContent = formatDate(complaint.date, true);
+            document.getElementById('detail-location').textContent = getLocationLabel(complaint.location);
+            document.getElementById('detail-status').textContent = getStatusLabel(complaint.status);
+            document.getElementById('detail-status').className = `detail-status ${complaint.status}`;
+            document.getElementById('detail-description').textContent = complaint.description;
+            
+            // Загружаем фото
+            const photosContainer = document.getElementById('detail-photos');
+            photosContainer.innerHTML = '';
+            
+            if (complaint.photos && complaint.photos.length > 0) {
+                complaint.photos.forEach(photo => {
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'detail-photo';
+                    photoDiv.innerHTML = `
+                        <img src="https://via.placeholder.com/150/1e293b/8b5cf6?text=${encodeURIComponent(photo)}" 
+                             alt="${photo}">
+                    `;
+                    photosContainer.appendChild(photoDiv);
+                });
+            }
+            
+            // Кнопки действий для админов
+            const actionsContainer = document.getElementById('detail-actions');
+            actionsContainer.innerHTML = '';
+            
+            if (window.currentEmployee && hasPermission(window.currentEmployee, 'complaints')) {
+                actionsContainer.innerHTML = `
+                    <button class="btn btn-secondary" onclick="changeStatus(${complaint.id}, 'in_progress')">
+                        В работу
+                    </button>
+                    <button class="btn btn-primary" onclick="changeStatus(${complaint.id}, 'resolved')">
+                        Решено
+                    </button>
+                `;
+            }
+            
+            document.getElementById('complaint-detail-modal').style.display = 'flex';
+        }
+
+        function hideComplaintDetail() {
+            document.getElementById('complaint-detail-modal').style.display = 'none';
+        }
+
+        function changeStatus(complaintId, newStatus) {
+            // Обновляем статус на сервере
+            const complaint = complaints.find(c => c.id === complaintId);
+            if (complaint) {
+                complaint.status = newStatus;
+                showNotification(`✅ Статус обращения обновлен на "${getStatusLabel(newStatus)}"`);
+                hideComplaintDetail();
+                loadComplaints();
+            }
+        }
+
+        function refreshComplaints() {
+            loadComplaints();
+            showNotification('🔄 Список обращений обновлен');
+        }
+
+        // Вспомогательные функции
+        function getTypeLabel(type) {
+            const labels = {
+                complaint: 'Жалоба',
+                suggestion: 'Предложение',
+                emergency: 'Срочное',
+                other: 'Другое'
+            };
+            return labels[type] || type;
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                new: 'Новое',
+                in_progress: 'В работе',
+                resolved: 'Решено'
+            };
+            return labels[status] || status;
+        }
+
+        function getUrgencyLabel(urgency) {
+            const labels = {
+                high: 'Высокая',
+                medium: 'Средняя',
+                low: 'Низкая'
+            };
+            return labels[urgency] || urgency;
+        }
+
+        function getLocationLabel(location) {
+            const locationObj = GALLERY13_CONFIG.locations.find(l => l.id === `gallery13_${location}`);
+            return locationObj ? locationObj.name : location;
+        }
+
+        function formatDate(dateString, full = false) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (full) {
+                return date.toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            if (diffMins < 1) return 'только что';
+            if (diffMins < 60) return `${diffMins} мин назад`;
+            if (diffHours < 24) return `${diffHours} ч назад`;
+            if (diffDays < 7) return `${diffDays} дн назад`;
+            
+            return date.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+
+        function sendToTelegram(data) {
+            // Отправка данных в Telegram бота
+            console.log('Отправка анонимного обращения:', data);
+            // Реальная интеграция через Telegram Bot API
+        }
+
+        function showNotification(message) {
+            // Создаем уведомление
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--primary-purple);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+                z-index: 2000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Проверка прав (добавить в auth.js если нужно)
+        function hasPermission(employee, permission) {
+            const permissions = GALLERY13_CONFIG.permissions[employee.role];
+            return permissions && permissions.includes(permission);
+        }
+    </script>
+</body>
+</html>

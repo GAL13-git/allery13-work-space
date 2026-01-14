@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Панель управления</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="config.js" defer></script>
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка Gallery 13 -->
+        <header class="gallery-header">
+            <div class="header-left">
+                <button class="btn-icon back-btn" onclick="window.location.href='index.html'">
+                    🏠
+                </button>
+                <div class="gallery-brand">
+                    <span class="brand-icon">🖼️</span>
+                    <div>
+                        <h1>Gallery 13</h1>
+                        <p class="brand-subtitle">Work Space Control</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <span id="user-avatar">👤</span>
+                </div>
+                <button class="btn-icon" id="logout-btn" title="Выйти">
+                    🚪
+                </button>
+            </div>
+        </header>
+
+        <!-- Информация о сотруднике -->
+        <div class="employee-card">
+            <div class="employee-info">
+                <h3 id="employee-name"></h3>
+                <div class="employee-details">
+                    <span class="badge role-badge" id="employee-role"></span>
+                    <span class="location-tag" id="employee-location"></span>
+                </div>
+                <p class="employee-position" id="employee-position"></p>
+            </div>
+            <div class="current-time">
+                <span id="current-time"></span>
+                <small id="current-date"></small>
+            </div>
+        </div>
+
+        <!-- Основной функционал -->
+        <div class="section-title">
+            <h2>⚡ Основные функции</h2>
+            <p>Управление рабочим пространством</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Отчет -->
+            <div class="feature-card gradient-purple" id="report-card">
+                <div class="feature-icon">📊</div>
+                <h3>Суточный отчет</h3>
+                <p>Касса, витрины, состояние</p>
+                <div class="feature-stats">
+                    <span class="stat">Сегодня: 0</span>
+                </div>
+            </div>
+
+            <!-- Анонимные жалобы -->
+            <div class="feature-card gradient-blue" id="complaints-card">
+                <div class="feature-icon">🕵️</div>
+                <h3>Анонимные обращения</h3>
+                <p>Только для администрации</p>
+                <div class="notification-badge" id="complaints-count">0</div>
+            </div>
+
+            <!-- Хозчасть -->
+            <div class="feature-card gradient-green" id="household-card">
+                <div class="feature-icon">🛠️</div>
+                <h3>Хозчасть</h3>
+                <p>Заказ расходников</p>
+                <div class="feature-stats">
+                    <span class="stat">Активных: 0</span>
+                </div>
+            </div>
+
+            <!-- Общий чат -->
+            <div class="feature-card gradient-orange" id="chat-card">
+                <div class="feature-icon">💬</div>
+                <h3>Командный чат</h3>
+                <p>Общение с фото</p>
+                <div class="feature-stats">
+                    <span class="stat">Новых: 0</span>
+                </div>
+            </div>
+
+            <!-- Управление сотрудниками -->
+            <div class="feature-card gradient-red" id="employees-card">
+                <div class="feature-icon">👥</div>
+                <h3>Команда</h3>
+                <p>Управление доступом</p>
+                <div class="feature-stats">
+                    <span class="stat">Всего: 0</span>
+                </div>
+            </div>
+
+            <!-- Быстрые отчеты -->
+            <div class="feature-card gradient-teal" id="quick-report-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Быстрые действия</h3>
+                <p>Шаблоны отчетов</p>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="section-title">
+            <h2>🚀 Быстрые действия</h2>
+            <p>Часто используемые функции</p>
+        </div>
+
+        <div class="quick-actions-grid">
+            <button class="quick-action-btn" onclick="sendQuickReport('open')">
+                <span class="action-icon">🔓</span>
+                Открытие смены
+            </button>
+            
+            <button class="quick-action-btn" onclick="sendQuickReport('close')">
+                <span class="action-icon">🔒</span>
+                Закрытие смены
+            </button>
+            
+            <button class="quick-action-btn" onclick="window.location.href='household.html?item=water'">
+                <span class="action-icon">💧</span>
+                Заказать воду
+            </button>
+            
+            <button class="quick-action-btn" onclick="window.location.href='report.html?template=daily'">
+                <span class="action-icon">📋</span>
+                Дневной отчет
+            </button>
+        </div>
+
+        <!-- Статус системы -->
+        <div class="system-status">
+            <h3>📈 Статус Gallery 13</h3>
+            <div class="status-grid">
+                <div class="status-item online">
+                    <span class="status-dot"></span>
+                    Система онлайн
+                </div>
+                <div class="status-item">
+                    <span class="status-dot warning"></span>
+                    Смены активны: 3
+                </div>
+                <div class="status-item">
+                    <span class="status-dot"></span>
+                    Заявок сегодня: 5
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверка авторизации
+            if (!window.currentEmployee) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const employee = window.currentEmployee;
+            
+            // Заполняем информацию о сотруднике
+            document.getElementById('employee-name').textContent = employee.name;
+            document.getElementById('employee-role').textContent = 
+                GALLERY13_CONFIG.roles[employee.role];
+            document.getElementById('employee-position').textContent = 
+                employee.position || employee.role;
+            
+            // Находим название локации
+            const location = GALLERY13_CONFIG.locations.find(l => l.id === employee.location);
+            document.getElementById('employee-location').textContent = 
+                location ? location.name : employee.location;
+
+            // Обновляем время
+            function updateTime() {
+                const now = new Date();
+                document.getElementById('current-time').textContent = 
+                    now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('current-date').textContent = 
+                    now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+
+            // Проверка прав доступа
+            const permissions = GALLERY13_CONFIG.permissions[employee.role];
+            
+            // Скрываем недоступные функции
+            if (!permissions.includes('report')) {
+                document.getElementById('report-card').style.display = 'none';
+                document.getElementById('quick-report-card').style.display = 'none';
+            }
+            if (!permissions.includes('complaints')) {
+                document.getElementById('complaints-card').style.display = 'none';
+            }
+            if (!permissions.includes('manage_employees')) {
+                document.getElementById('employees-card').style.display = 'none';
+            }
+
+            // Назначение обработчиков
+            document.getElementById('report-card').addEventListener('click', () => {
+                window.location.href = 'report.html';
+            });
+            
+            document.getElementById('complaints-card').addEventListener('click', () => {
+                window.location.href = 'anonymous.html';
+            });
+            
+            document.getElementById('household-card').addEventListener('click', () => {
+                window.location.href = 'household.html';
+            });
+            
+            document.getElementById('chat-card').addEventListener('click', () => {
+                window.location.href = 'chat.html';
+            });
+            
+            document.getElementById('employees-card').addEventListener('click', () => {
+                window.location.href = 'employees.html';
+            });
+            
+            document.getElementById('quick-report-card').addEventListener('click', () => {
+                window.location.href = 'report.html?quick=true';
+            });
+
+            // Выход
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                if (confirm('Вы действительно хотите выйти из системы?')) {
+                    window.currentEmployee = null;
+                    window.location.href = 'index.html';
+                }
+            });
+
+            // Загрузка статистики
+            loadDashboardStats();
+        });
+
+        function loadDashboardStats() {
+            // Здесь будет загрузка статистики
+            // Пока заглушка
+            setTimeout(() => {
+                document.getElementById('complaints-count').textContent = '3';
+            }, 500);
+        }
+
+        function sendQuickReport(type) {
+            const reports = {
+                'open': 'Отчет об открытии смены',
+                'close': 'Отчет о закрытии смены'
+            };
+            
+            if (confirm(`Отправить ${reports[type]}?`)) {
+                // Отправка быстрого отчета
+                alert(`${reports[type]} отправлен администратору`);
+            }
+        }
+    </script>
+</body>
+</html>

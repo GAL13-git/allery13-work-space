@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Work Space</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="js/telegram.js" defer></script>
+    <script src="config.js" defer></script>
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Логотип Gallery 13 -->
+        <div class="logo-header">
+            <div class="logo-icon">🖼️</div>
+            <h1>Gallery 13</h1>
+            <p class="logo-subtitle">Work Space</p>
+            <p class="company-info">Пространство для эффективной работы</p>
+        </div>
+
+        <!-- Выбор зоны Gallery 13 -->
+        <div class="card" id="location-selector">
+            <h2>📍 Выберите зону</h2>
+            <p class="hint">Выберите рабочую зону в Gallery 13</p>
+            <div class="location-grid" id="location-list">
+                <!-- Динамически загружается из config.js -->
+            </div>
+        </div>
+
+        <!-- Форма входа -->
+        <div class="card" id="login-form" style="display: none;">
+            <h2>🔐 Вход в систему</h2>
+            <div class="selected-location-info">
+                <span id="selected-location-name"></span>
+                <span id="selected-location-address"></span>
+            </div>
+            
+            <div class="form-group">
+                <label for="pin-input">Введите ваш PIN-код</label>
+                <div class="pin-input-container">
+                    <input type="password" id="pin-input" maxlength="4" 
+                           inputmode="numeric" placeholder="••••" autocomplete="off">
+                    <button class="btn-icon" id="toggle-pin">👁️</button>
+                </div>
+                
+                <div class="pin-keyboard">
+                    <button class="pin-btn" data-digit="1">1</button>
+                    <button class="pin-btn" data-digit="2">2</button>
+                    <button class="pin-btn" data-digit="3">3</button>
+                    <button class="pin-btn" data-digit="4">4</button>
+                    <button class="pin-btn" data-digit="5">5</button>
+                    <button class="pin-btn" data-digit="6">6</button>
+                    <button class="pin-btn" data-digit="7">7</button>
+                    <button class="pin-btn" data-digit="8">8</button>
+                    <button class="pin-btn" data-digit="9">9</button>
+                    <button class="pin-btn" data-digit="0">0</button>
+                    <button class="pin-btn delete" id="pin-delete">⌫</button>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="login-btn">
+                <span class="btn-icon">🚪</span>
+                Войти в систему
+            </button>
+            
+            <div class="login-footer">
+                <p class="hint">Если забыли PIN, обратитесь к администратору</p>
+            </div>
+            
+            <div class="error-message" id="login-error"></div>
+        </div>
+
+        <!-- Анонимный доступ -->
+        <div class="card anonymous-access">
+            <div class="anonymous-header">
+                <span class="icon">🕵️</span>
+                <h3>Анонимное обращение</h3>
+            </div>
+            <p class="hint">Можете отправить жалобу или предложение анонимно</p>
+            <button class="btn btn-secondary" id="anonymous-complaint-btn">
+                <span class="btn-icon">📨</span>
+                Отправить анонимно
+            </button>
+        </div>
+
+        <!-- Информация о системе -->
+        <div class="system-info">
+            <p>🖼️ <strong>Gallery 13 Work Space</strong></p>
+            <p>⏰ Рабочие часы: <strong>10:00 - 22:00</strong></p>
+            <p class="copyright">© 2024 Gallery 13. Все права защищены.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Заполняем список зон Gallery 13
+            const locationList = document.getElementById('location-list');
+            GALLERY13_CONFIG.locations.forEach(location => {
+                const locationCard = document.createElement('div');
+                locationCard.className = 'location-card';
+                locationCard.innerHTML = `
+                    <div class="location-icon">📍</div>
+                    <div class="location-info">
+                        <strong>${location.name}</strong>
+                        <small>${location.address}</small>
+                    </div>
+                    <div class="location-select">→</div>
+                `;
+                locationCard.addEventListener('click', () => {
+                    selectLocation(location.id);
+                });
+                locationList.appendChild(locationCard);
+            });
+
+            // Переключение видимости PIN
+            document.getElementById('toggle-pin').addEventListener('click', function() {
+                const pinInput = document.getElementById('pin-input');
+                pinInput.type = pinInput.type === 'password' ? 'text' : 'password';
+                this.textContent = pinInput.type === 'password' ? '👁️' : '👁️‍🗨️';
+            });
+
+            // PIN-клавиатура
+            document.querySelectorAll('.pin-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const pinInput = document.getElementById('pin-input');
+                    if (this.id === 'pin-delete') {
+                        pinInput.value = pinInput.value.slice(0, -1);
+                    } else {
+                        const digit = this.getAttribute('data-digit');
+                        if (pinInput.value.length < 4) {
+                            pinInput.value += digit;
+                        }
+                    }
+                });
+            });
+
+            // Кнопка входа
+            document.getElementById('login-btn').addEventListener('click', function() {
+                const location = window.selectedLocation;
+                const pin = document.getElementById('pin-input').value;
+                
+                const employee = authenticateEmployee(location, pin);
+                if (employee) {
+                    window.currentEmployee = employee;
+                    window.location.href = 'dashboard.html';
+                } else {
+                    document.getElementById('login-error').textContent = 
+                        'Неверный PIN-код или доступ к этой зоне запрещен';
+                }
+            });
+
+            // Анонимная жалоба
+            document.getElementById('anonymous-complaint-btn').addEventListener('click', function() {
+                window.location.href = 'anonymous.html?anonymous=true';
+            });
+        });
+
+        function selectLocation(locationId) {
+            window.selectedLocation = locationId;
+            const location = GALLERY13_CONFIG.locations.find(l => l.id === locationId);
+            
+            document.getElementById('selected-location-name').textContent = location.name;
+            document.getElementById('selected-location-address').textContent = location.address;
+            
+            document.getElementById('location-selector').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+            
+            // Автофокус на поле PIN
+            setTimeout(() => {
+                document.getElementById('pin-input').focus();
+            }, 100);
+        }
+    </script>
+</body>
+</html>

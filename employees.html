@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Управление командой</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="gallery-header">
+            <div class="header-left">
+                <button class="btn-icon back-btn" onclick="window.location.href='dashboard.html'">
+                    ←
+                </button>
+                <div class="gallery-brand">
+                    <span class="brand-icon">👥</span>
+                    <div>
+                        <h1>Управление командой</h1>
+                        <p class="brand-subtitle">Gallery 13 Personnel</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn-icon" onclick="showAddEmployeeForm()" title="Добавить сотрудника">
+                    ➕
+                </button>
+                <button class="btn-icon" onclick="exportEmployees()" title="Экспорт">
+                    📥
+                </button>
+                <button class="btn-icon" onclick="refreshEmployees()" title="Обновить">
+                    🔄
+                </button>
+            </div>
+        </header>
+
+        <!-- Статистика команды -->
+        <div class="team-stats">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="total-employees">0</span>
+                    <span class="stat-label">Всего сотрудников</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="active-employees">0</span>
+                    <span class="stat-label">Активных</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📍</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="locations-count">0</span>
+                    <span class="stat-label">Локаций</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="shifts-today">0</span>
+                    <span class="stat-label">Смен сегодня</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Поиск и фильтры -->
+        <div class="filters-section">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="employee-search" placeholder="Поиск сотрудников..." 
+                       oninput="searchEmployees()">
+                <button class="btn-icon" onclick="clearSearch()">✕</button>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="setRoleFilter('all')">
+                    Все роли
+                </button>
+                <button class="filter-btn" onclick="setRoleFilter('admin')">
+                    Администрация
+                </button>
+                <button class="filter-btn" onclick="setRoleFilter('staff')">
+                    Персонал
+                </button>
+                <button class="filter-btn" onclick="setRoleFilter('inactive')">
+                    Неактивные
+                </button>
+            </div>
+        </div>
+
+        <!-- Список сотрудников -->
+        <div class="section-title">
+            <h2>📋 Список сотрудников</h2>
+            <p>Управление доступом и правами</p>
+        </div>
+
+        <div class="employees-table">
+            <div class="table-header">
+                <div class="table-col name">Сотрудник</div>
+                <div class="table-col role">Роль</div>
+                <div class="table-col location">Локация</div>
+                <div class="table-col status">Статус</div>
+                <div class="table-col actions">Действия</div>
+            </div>
+            
+            <div class="table-body" id="employees-list">
+                <!-- Сотрудники загружаются динамически -->
+            </div>
+        </div>
+
+        <!-- Кнопка добавления -->
+        <div class="floating-action">
+            <button class="fab-btn" onclick="showAddEmployeeForm()">
+                <span class="fab-icon">+</span>
+            </button>
+        </div>
+
+        <!-- Форма добавления/редактирования сотрудника -->
+        <div class="modal-overlay" id="employee-form-modal" style="display: none;">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="form-title">Добавить сотрудника</h2>
+                    <button class="btn-icon" onclick="hideEmployeeForm()">✕</button>
+                </div>
+                
+                <form id="employee-form" class="form-grid">
+                    <div class="form-section">
+                        <h3>👤 Основная информация</h3>
+                        
+                        <div class="form-group">
+                            <label>ФИО *</label>
+                            <input type="text" id="employee-name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Должность *</label>
+                            <input type="text" id="employee-position" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Телефон</label>
+                            <input type="tel" id="employee-phone" 
+                                   pattern="[\+]\d{1,3}[-\s]?\(?\d{1,3}\)?[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{1,9}"
+                                   placeholder="+7 (XXX) XXX-XX-XX">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="employee-email">
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>🔐 Доступ и права</h3>
+                        
+                        <div class="form-group">
+                            <label>Роль *</label>
+                            <select id="employee-role" required onchange="updatePermissions()">
+                                <option value="">Выберите роль</option>
+                                <option value="admin">Администратор</option>
+                                <option value="assistant">Помощник администратора</option>
+                                <option value="manager">Менеджер</option>
+                                <option value="cashier">Кассир</option>
+                                <option value="security">Охрана</option>
+                                <option value="consultant">Консультант</option>
+                                <option value="webdev">Web-разработчик</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Локация *</label>
+                            <select id="employee-location" required>
+                                <option value="">Выберите локацию</option>
+                                ${GALLERY13_CONFIG.locations.map(loc => 
+                                    `<option value="${loc.id}">${loc.name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>PIN-код *</label>
+                            <div class="pin-input-group">
+                                <input type="password" id="employee-pin" 
+                                       pattern="[0-9]{4}" maxlength="4" 
+                                       placeholder="4 цифры" required>
+                                <button type="button" class="btn-icon" onclick="generatePin()">
+                                    🔄
+                                </button>
+                            </div>
+                            <small class="hint">4 цифры для входа в систему</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Telegram ID</label>
+                            <input type="text" id="employee-telegram" 
+                                   placeholder="@username или 123456789">
+                        </div>
+                    </div>
+                    
+                    <div class="form-section full-width">
+                        <h3>🔐 Права доступа</h3>
+                        <div class="permissions-grid" id="permissions-list">
+                            <!-- Права загружаются динамически -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-section full-width">
+                        <h3>📅 График работы</h3>
+                        <div class="schedule-grid">
+                            <div class="schedule-day">
+                                <label>Понедельник</label>
+                                <input type="time" id="mon-start"> -
+                                <input type="time" id="mon-end">
+                            </div>
+                            <div class="schedule-day">
+                                <label>Вторник</label>
+                                <input type="time" id="tue-start"> -
+                                <input type="time" id="tue-end">
+                            </div>
+                            <div class="schedule-day">
+                                <label>Среда</label>
+                                <input type="time" id="wed-start"> -
+                                <input type="time" id="wed-end">
+                            </div>
+                            <div class="schedule-day">
+                                <label>Четверг</label>
+                                <input type="time" id="thu-start"> -
+                                <input type="time" id="thu-end">
+                            </div>
+                            <div class="schedule-day">
+                                <label>Пятница</label>
+                                <input type="time" id="fri-start"> -
+                                <input type="time" id="fri-end">
+                            </div>
+                            <div class="schedule-day">
+                                <label>Суббота</label>
+                                <input type="time" id="sat-start"> -
+                                <input type="time" id="sat-end">
+                            </div>
+                            <div class="schedule-day">
+                                <label>Воскресенье</label>
+                                <input type="time" id="sun-start"> -
+                                <input type="time" id="sun-end">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="hideEmployeeForm()">
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="form-submit-btn">
+                            Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Детали сотрудника (модальное) -->
+        <div class="modal-overlay" id="employee-detail-modal" style="display: none;">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="detail-employee-name"></h2>
+                    <button class="btn-icon" onclick="hideEmployeeDetail()">✕</button>
+                </div>
+                
+                <div class="employee-detail-tabs">
+                    <button class="tab-btn active" onclick="switchTab('info')">👤 Информация</button>
+                    <button class="tab-btn" onclick="switchTab('schedule')">📅 График</button>
+                    <button class="tab-btn" onclick="switchTab('activity')">📊 Активность</button>
+                    <button class="tab-btn" onclick="switchTab('access')">🔐 Доступ</button>
+                </div>
+                
+                <div class="tab-content" id="tab-info">
+                    <!-- Информация о сотруднике -->
+                </div>
+                
+                <div class="tab-content" id="tab-schedule" style="display: none;">
+                    <!-- График работы -->
+                </div>
+                
+                <div class="tab-content" id="tab-activity" style="display: none;">
+                    <!-- Активность -->
+                </div>
+                
+                <div class="tab-content" id="tab-access" style="display: none;">
+                    <!-- Управление доступом -->
+                </div>
+                
+                <div class="detail-actions">
+                    <button class="btn btn-secondary" onclick="editEmployee()">
+                        ✏️ Редактировать
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetPassword()">
+                        🔄 Сбросить пароль
+                    </button>
+                    <button class="btn btn-danger" onclick="deactivateEmployee()">
+                        🚫 Деактивировать
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Импорт сотрудников (модальное) -->
+        <div class="modal-overlay" id="import-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📥 Импорт сотрудников</h2>
+                    <button class="btn-icon" onclick="hideImportModal()">✕</button>
+                </div>
+                
+                <div class="import-content">
+                    <div class="import-option">
+                        <div class="option-icon">📄</div>
+                        <div class="option-info">
+                            <strong>Файл Excel/CSV</strong>
+                            <small>Загрузите файл с данными сотрудников</small>
+                        </div>
+                        <input type="file" id="file-upload" accept=".csv,.xlsx,.xls" 
+                               style="display: none;" onchange="handleFileUpload()">
+                        <button class="btn btn-secondary" onclick="document.getElementById('file-upload').click()">
+                            Выбрать файл
+                        </button>
+                    </div>
+                    
+                    <div class="import-option">
+                        <div class="option-icon">📋</div>
+                        <div class="option-info">
+                            <strong>Вставить из таблицы</strong>
+                            <small>Скопируйте данные из Excel/Google Sheets</small>
+                        </div>
+                        <textarea id="paste-data" placeholder="Вставьте данные здесь..." 
+                                  rows="6"></textarea>
+                    </div>
+                    
+                    <div class="import-hint">
+                        <p>📝 Формат данных:</p>
+                        <p>ФИО | Должность | Телефон | Email | Роль | Локация | PIN</p>
+                    </div>
+                    
+                    <div class="import-actions">
+                        <button class="btn btn-secondary" onclick="hideImportModal()">
+                            Отмена
+                        </button>
+                        <button class="btn btn-primary" onclick="processImport()">
+                            Импортировать
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Стили для управления сотрудниками */
+        .team-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            font-size: 32px;
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .filters-section {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px 16px;
+            margin-bottom: 20px;
+        }
+
+        .search-icon {
+            color: var(--text-secondary);
+            margin-right: 12px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 16px;
+            padding: 16px 0;
+        }
+
+        .search-box input:focus {
+            outline: none;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--border);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-purple);
+            color: white;
+            border-color: var(--primary-purple);
+        }
+
+        .employees-table {
+            background: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 100px;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 20px;
+            padding: 20px;
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .table-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .employee-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 20px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+
+        .employee-row:hover {
+            background: var(--surface-light);
+        }
+
+        .employee-row.inactive {
+            opacity: 0.6;
+            background: var(--surface-light);
+        }
+
+        .employee-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .employee-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .employee-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .employee-name {
+            font-weight: 600;
+        }
+
+        .employee-position {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .role-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .role-admin {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--primary-purple);
+        }
+
+        .role-assistant {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .role-manager {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .role-cashier {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .role-other {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .location-tag {
+            padding: 6px 12px;
+            background: var(--surface-light);
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .status-away {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--surface-light);
+            border-color: var(--primary-purple);
+        }
+
+        /* Форма сотрудника */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            padding: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-section.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-section h3 {
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .pin-input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .pin-input-group input {
+            flex: 1;
+        }
+
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--surface-light);
+            border-radius: 12px;
+        }
+
+        .permission-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .permission-info {
+            flex: 1;
+        }
+
+        .permission-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .permission-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .schedule-day {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .schedule-day label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .schedule-day input {
+            width: 100%;
+            padding: 12px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Вкладки деталей сотрудника */
+        .employee-detail-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 16px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            background: var(--surface-light);
+        }
+
+        .tab-btn.active {
+            border-bottom-color: var(--primary-purple);
+            color: var(--primary-purple);
+        }
+
+        .tab-content {
+            padding: 24px;
+            min-height: 300px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .detail-card {
+            background: var(--surface-light);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .detail-card h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-weight: 500;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 12px;
+            padding: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Импорт */
+        .import-content {
+            padding: 24px;
+        }
+
+        .import-option {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            background: var(--surface-light);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .option-icon {
+            font-size: 32px;
+        }
+
+        .option-info {
+            flex: 1;
+        }
+
+        .option-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .option-info small {
+            color: var(--text-secondary);
+        }
+
+        .import-option textarea {
+            width: 100%;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 16px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .import-hint {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .import-hint p {
+            margin-bottom: 8px;
+        }
+
+        .import-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .table-header, .employee-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .table-col.actions {
+                justify-self: end;
+            }
+            
+            .team-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .employee-detail-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .tab-btn {
+                white-space: nowrap;
+            }
+        }
+    </style>
+
+    <script>
+        let employees = [];
+        let currentEmployeeId = null;
+        let currentRoleFilter = 'all';
+        let currentSearchQuery = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверка прав
+            if (!window.currentEmployee) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const permissions = GALLERY13_CONFIG.permissions[window.currentEmployee.role];
+            if (!permissions.includes('manage_employees')) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Загружаем сотрудников
+            loadEmployees();
+            
+            // Обработка формы
+            document.getElementById('employee-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEmployee();
+            });
+            
+            // Загружаем права для формы
+            updatePermissions();
+        });
+
+        function loadEmployees() {
+            // Загрузка сотрудников с сервера
+            // Пока используем данные из config.js
+            employees = [...EMPLOYEES_DB];
+            
+            // Добавляем тестовых сотрудников
+            employees = employees.concat([
+                {
+                    id: 4,
+                    name: 'Анна Сидорова',
+                    role: 'cashier',
+                    position: 'Кассир',
+                    location: 'gallery13_main',
+                    pin: '1316',
+                    telegramId: 'cashier_g13',
+                    phone: '+7 (999) 123-45-67',
+                    email: 'anna@gallery13.ru',
+                    status: 'active',
+                    schedule: {
+                        mon: '10:00-18:00',
+                        tue: '10:00-18:00',
+                        wed: '10:00-18:00',
+                        thu: '10:00-18:00',
+                        fri: '10:00-18:00',
+                        sat: '12:00-20:00',
+                        sun: 'выходной'
+                    }
+                },
+                {
+                    id: 5,
+                    name: 'Иван Кузнецов',
+                    role: 'security',
+                    position: 'Охрана',
+                    location: 'gallery13_storage',
+                    pin: '1317',
+                    telegramId: 'security_g13',
+                    phone: '+7 (999) 765-43-21',
+                    status: 'active'
+                },
+                {
+                    id: 6,
+                    name: 'Елена Воробьева',
+                    role: 'consultant',
+                    position: 'Консультант',
+                    location: 'gallery13_vip',
+                    pin: '1318',
+                    telegramId: 'consultant_g13',
+                    status: 'away'
+                }
+            ]);
+            
+            updateStatistics();
+            displayEmployees();
+        }
+
+        function updateStatistics() {
+            const total = employees.length;
+            const active = employees.filter(e => e.status === 'active').length;
+            const locations = [...new Set(employees.map(e => e.location))].length;
+            
+            document.getElementById('total-employees').textContent = total;
+            document.getElementById('active-employees').textContent = active;
+            document.getElementById('locations-count').textContent = locations;
+            document.getElementById('shifts-today').textContent = Math.floor(active * 1.5);
+        }
+
+        function displayEmployees() {
+            const container = document.getElementById('employees-list');
+            
+            if (employees.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <h3>Сотрудники не найдены</h3>
+                        <p>Добавьте первого сотрудника</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let filteredEmployees = [...employees];
+            
+            // Фильтр по роли
+            if (currentRoleFilter !== 'all') {
+                if (currentRoleFilter === 'admin') {
+                    filteredEmployees = filteredEmployees.filter(e => 
+                        e.role === 'admin' || e.role === 'assistant' || e.role === 'webdev'
+                    );
+                } else if (currentRoleFilter === 'staff') {
+                    filteredEmployees = filteredEmployees.filter(e => 
+                        !['admin', 'assistant', 'webdev'].includes(e.role)
+                    );
+                } else if (currentRoleFilter === 'inactive') {
+                    filteredEmployees = filteredEmployees.filter(e => 
+                        e.status !== 'active'
+                    );
+                }
+            }
+            
+            // Фильтр по поиску
+            if (currentSearchQuery) {
+                const query = currentSearchQuery.toLowerCase();
+                filteredEmployees = filteredEmployees.filter(e => 
+                    e.name.toLowerCase().includes(query) ||
+                    e.position.toLowerCase().includes(query) ||
+                    e.role.toLowerCase().includes(query)
+                );
+            }
+            
+            container.innerHTML = '';
+            
+            filteredEmployees.forEach(employee => {
+                const row = document.createElement('div');
+                row.className = `employee-row ${employee.status !== 'active' ? 'inactive' : ''}`;
+                
+                const location = GALLERY13_CONFIG.locations.find(l => l.id === employee.location);
+                const roleName = GALLERY13_CONFIG.roles[employee.role] || employee.role;
+                
+                row.innerHTML = `
+                    <div class="employee-info">
+                        <div class="employee-avatar">
+                            ${getAvatarForRole(employee.role)}
+                        </div>
+                        <div class="employee-details">
+                            <div class="employee-name">${employee.name}</div>
+                            <div class="employee-position">${employee.position || roleName}</div>
+                        </div>
+                    </div>
+                    <div class="role-badge role-${employee.role}">
+                        ${roleName}
+                    </div>
+                    <div class="location-tag">
+                        ${location ? location.name : employee.location}
+                    </div>
+                    <div class="status-badge status-${employee.status || 'active'}">
+                        ${getStatusText(employee.status)}
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="viewEmployee(${employee.id})" title="Просмотр">
+                            👁️
+                        </button>
+                        <button class="action-btn" onclick="editEmployee(${employee.id})" title="Редактировать">
+                            ✏️
+                        </button>
+                        <button class="action-btn" onclick="deleteEmployee(${employee.id})" title="Удалить">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+            });
+        }
+
+        function searchEmployees() {
+            currentSearchQuery = document.getElementById('employee-search').value.trim();
+            displayEmployees();
+        }
+
+        function clearSearch() {
+            document.getElementById('employee-search').value = '';
+            currentSearchQuery = '';
+            displayEmployees();
+        }
+
+        function setRoleFilter(role) {
+            currentRoleFilter = role;
+            
+            // Обновляем активные кнопки
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            
+            displayEmployees();
+        }
+
+        function showAddEmployeeForm() {
+            currentEmployeeId = null;
+            document.getElementById('form-title').textContent = 'Добавить сотрудника';
+            document.getElementById('form-submit-btn').textContent = 'Добавить';
+            
+            // Сбрасываем форму
+            document.getElementById('employee-form').reset();
+            
+            // Обновляем права
+            updatePermissions();
+            
+            document.getElementById('employee-form-modal').style.display = 'flex';
+        }
+
+        function hideEmployeeForm() {
+            document.getElementById('employee-form-modal').style.display = 'none';
+        }
+
+        function generatePin() {
+            // Генерация случайного 4-значного PIN
+            const pin = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('employee-pin').value = pin;
+        }
+
+        function updatePermissions() {
+            const role = document.getElementById('employee-role').value;
+            const permissions = role ? GALLERY13_CONFIG.permissions[role] || [] : [];
+            const container = document.getElementById('permissions-list');
+            
+            if (!role) {
+                container.innerHTML = '<p class="hint">Выберите роль для просмотра прав</p>';
+                return;
+            }
+            
+            const allPermissions = [
+                { id: 'report', name: 'Отчеты', desc: 'Создание и отправка отчетов' },
+                { id: 'complaints', name: 'Анонимные жалобы', desc: 'Просмотр анонимных обращений' },
+                { id: 'household', name: 'Хозчасть', desc: 'Заказ расходников' },
+                { id: 'chat', name: 'Общий чат', desc: 'Доступ к командному чату' },
+                { id: 'manage_employees', name: 'Управление сотрудниками', desc: 'Добавление и редактирование сотрудников' },
+                { id: 'view_all_locations', name: 'Все локации', desc: 'Доступ ко всем точкам Gallery 13' }
+            ];
+            
+            let html = '';
+            allPermissions.forEach(perm => {
+                const hasPerm = permissions.includes(perm.id);
+                html += `
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm-${perm.id}" 
+                               ${hasPerm ? 'checked' : ''} 
+                               ${hasPerm ? '' : 'disabled'}>
+                        <div class="permission-info">
+                            <div class="permission-name">${perm.name}</div>
+                            <div class="permission-description">${perm.desc}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function saveEmployee() {
+            const formData = {
+                name: document.getElementById('employee-name').value,
+                position: document.getElementById('employee-position').value,
+                phone: document.getElementById('employee-phone').value,
+                email: document.getElementById('employee-email').value,
+                role: document.getElementById('employee-role').value,
+                location: document.getElementById('employee-location').value,
+                pin: document.getElementById('employee-pin').value,
+                telegramId: document.getElementById('employee-telegram').value,
+                status: 'active'
+            };
+            
+            // Валидация
+            if (!formData.pin.match(/^\d{4}$/)) {
+                alert('PIN-код должен состоять из 4 цифр');
+                return;
+            }
+            
+            if (currentEmployeeId) {
+                // Обновление существующего сотрудника
+                const index = employees.findIndex(e => e.id === currentEmployeeId);
+                if (index !== -1) {
+                    employees[index] = { ...employees[index], ...formData };
+                    showNotification('✅ Сотрудник обновлен');
+                }
+            } else {
+                // Добавление нового сотрудника
+                const newId = Math.max(...employees.map(e => e.id), 0) + 1;
+                employees.push({
+                    id: newId,
+                    ...formData
+                });
+                showNotification('✅ Сотрудник добавлен');
+            }
+            
+            hideEmployeeForm();
+            loadEmployees();
+        }
+
+        function viewEmployee(id) {
+            const employee = employees.find(e => e.id === id);
+            if (!employee) return;
+            
+            currentEmployeeId = id;
+            document.getElementById('detail-employee-name').textContent = employee.name;
+            
+            // Загружаем вкладку с информацией
+            loadEmployeeDetail(employee);
+            
+            document.getElementById('employee-detail-modal').style.display = 'flex';
+        }
+
+        function loadEmployeeDetail(employee) {
+            const location = GALLERY13_CONFIG.locations.find(l => l.id === employee.location);
+            const roleName = GALLERY13_CONFIG.roles[employee.role] || employee.role;
+            
+            // Вкладка "Информация"
+            const infoTab = document.getElementById('tab-info');
+            infoTab.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <h3>👤 Личная информация</h3>
+                        <div class="detail-item">
+                            <span class="detail-label">ФИО:</span>
+                            <span class="detail-value">${employee.name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Должность:</span>
+                            <span class="detail-value">${employee.position || roleName}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Роль:</span>
+                            <span class="detail-value">${roleName}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Статус:</span>
+                            <span class="detail-value">${getStatusText(employee.status)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-card">
+                        <h3>📞 Контакты</h3>
+                        <div class="detail-item">
+                            <span class="detail-label">Телефон:</span>
+                            <span class="detail-value">${employee.phone || 'Не указан'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">${employee.email || 'Не указан'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Telegram:</span>
+                            <span class="detail-value">${employee.telegramId || 'Не указан'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">PIN-код:</span>
+                            <span class="detail-value">••••</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-card">
+                        <h3>📍 Рабочее место</h3>
+                        <div class="detail-item">
+                            <span class="detail-label">Локация:</span>
+                            <span class="detail-value">${location ? location.name : employee.location}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Дата добавления:</span>
+                            <span class="detail-value">${new Date().toLocaleDateString('ru-RU')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Последняя активность:</span>
+                            <span class="detail-value">Сегодня, 09:30</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Отчетов за месяц:</span>
+                            <span class="detail-value">12</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchTab(tabName) {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Снимаем активный класс со всех кнопок
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Показываем выбранную вкладку
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+            
+            // Добавляем активный класс к кнопке
+            event.target.classList.add('active');
+        }
+
+        function hideEmployeeDetail() {
+            document.getElementById('employee-detail-modal').style.display = 'none';
+        }
+
+        function editEmployee(id = null) {
+            if (id === null) id = currentEmployeeId;
+            const employee = employees.find(e => e.id === id);
+            if (!employee) return;
+            
+            currentEmployeeId = id;
+            document.getElementById('form-title').textContent = 'Редактировать сотрудника';
+            document.getElementById('form-submit-btn').textContent = 'Сохранить';
+            
+            // Заполняем форму данными
+            document.getElementById('employee-name').value = employee.name;
+            document.getElementById('employee-position').value = employee.position || '';
+            document.getElementById('employee-phone').value = employee.phone || '';
+            document.getElementById('employee-email').value = employee.email || '';
+            document.getElementById('employee-role').value = employee.role;
+            document.getElementById('employee-location').value = employee.location;
+            document.getElementById('employee-pin').value = employee.pin || '';
+            document.getElementById('employee-telegram').value = employee.telegramId || '';
+            
+            // Обновляем права
+            updatePermissions();
+            
+            // Закрываем детали и открываем форму
+            hideEmployeeDetail();
+            document.getElementById('employee-form-modal').style.display = 'flex';
+        }
+
+        function deleteEmployee(id) {
+            if (confirm('Вы уверены что хотите удалить этого сотрудника?')) {
+                employees = employees.filter(e => e.id !== id);
+                loadEmployees();
+                showNotification('🗑️ Сотрудник удален');
+            }
+        }
+
+        function resetPassword() {
+            if (confirm('Сгенерировать новый PIN-код для сотрудника?')) {
+                const newPin = Math.floor(1000 + Math.random() * 9000);
+                alert(`Новый PIN-код: ${newPin}\n\nСообщите его сотруднику.`);
+                showNotification('🔄 PIN-код сброшен');
+            }
+        }
+
+        function deactivateEmployee() {
+            if (confirm('Деактивировать аккаунт сотрудника?')) {
+                const index = employees.findIndex(e => e.id === currentEmployeeId);
+                if (index !== -1) {
+                    employees[index].status = 'inactive';
+                    loadEmployees();
+                    hideEmployeeDetail();
+                    showNotification('🚫 Сотрудник деактивирован');
+                }
+            }
+        }
+
+        function exportEmployees() {
+            // Экспорт данных в CSV
+            const csv = 'ФИО;Должность;Роль;Локация;Телефон;Email;Статус\n' +
+                employees.map(e => 
+                    `${e.name};${e.position || ''};${GALLERY13_CONFIG.roles[e.role] || e.role};` +
+                    `${GALLERY13_CONFIG.locations.find(l => l.id === e.location)?.name || e.location};` +
+                    `${e.phone || ''};${e.email || ''};${getStatusText(e.status)}`
+                ).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `gallery13_employees_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showNotification('📥 Экспорт завершен');
+        }
+
+        function refreshEmployees() {
+            loadEmployees();
+            showNotification('🔄 Список сотрудников обновлен');
+        }
+
+        // Вспомогательные функции
+        function getAvatarForRole(role) {
+            const avatars = {
+                admin: '👨‍💼',
+                assistant: '👩‍💼',
+                manager: '👔',
+                cashier: '💰',
+                security: '👮‍♂️',
+                consultant: '💁',
+                webdev: '👨‍💻'
+            };
+            return avatars[role] || '👤';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                active: 'Активен',
+                inactive: 'Неактивен',
+                away: 'Отсутствует'
+            };
+            return texts[status] || status;
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--primary-purple);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+                z-index: 2000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Суточный отчет</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="gallery-header">
+            <div class="header-left">
+                <button class="btn-icon back-btn" onclick="window.location.href='dashboard.html'">
+                    ←
+                </button>
+                <div class="gallery-brand">
+                    <span class="brand-icon">📊</span>
+                    <div>
+                        <h1>Суточный отчет</h1>
+                        <p class="brand-subtitle">Gallery 13 Work Space</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="report-actions">
+                <button class="btn-icon" onclick="saveDraft()" title="Сохранить черновик">
+                    💾
+                </button>
+                <button class="btn-icon" onclick="loadTemplate()" title="Загрузить шаблон">
+                    📋
+                </button>
+            </div>
+        </header>
+
+        <!-- Информация об отчете -->
+        <div class="report-info">
+            <div class="info-item">
+                <span class="info-label">Дата:</span>
+                <span id="report-date" class="info-value"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Смена:</span>
+                <select id="shift-select" class="info-value">
+                    <option value="day">Дневная (10:00-18:00)</option>
+                    <option value="evening">Вечерняя (18:00-22:00)</option>
+                    <option value="full">Полная (10:00-22:00)</option>
+                </select>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Ответственный:</span>
+                <span id="report-employee" class="info-value"></span>
+            </div>
+        </div>
+
+        <form id="report-form">
+            <!-- Секция 1: Финансы -->
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-icon">💰</span>
+                    <h2>Финансовый отчет</h2>
+                </div>
+                
+                <div class="finance-grid">
+                    <div class="finance-item">
+                        <label>Наличные в кассе</label>
+                        <input type="number" id="cash-start" placeholder="Начальная сумма" required>
+                        <input type="number" id="cash-end" placeholder="Конечная сумма" required>
+                    </div>
+                    
+                    <div class="finance-item">
+                        <label>Безналичные операции</label>
+                        <input type="number" id="terminal-amount" placeholder="Сумма по терминалу">
+                        <select id="terminal-status">
+                            <option value="ok">Терминал работает</option>
+                            <option value="issues">Есть проблемы</option>
+                            <option value="offline">Не работает</option>
+                        </select>
+                    </div>
+                    
+                    <div class="finance-item">
+                        <label>Расхождения</label>
+                        <textarea id="discrepancies" placeholder="Опишите расхождения, если есть" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Секция 2: Витрины и товар -->
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-icon">👜</span>
+                    <h2>Витрины и товар</h2>
+                </div>
+                
+                <div class="showcases-grid">
+                    <div class="showcase-item">
+                        <h3>Основная витрина</h3>
+                        <select class="showcase-status">
+                            <option value="">Состояние</option>
+                            <option value="perfect">Идеально</option>
+                            <option value="good">Хорошо</option>
+                            <option value="needs_cleaning">Нужна уборка</option>
+                            <option value="needs_restock">Нужно пополнение</option>
+                        </select>
+                        <textarea placeholder="Комментарий..." rows="2"></textarea>
+                    </div>
+                    
+                    <div class="showcase-item">
+                        <h3>VIP витрина</h3>
+                        <select class="showcase-status">
+                            <option value="">Состояние</option>
+                            <option value="perfect">Идеально</option>
+                            <option value="good">Хорошо</option>
+                            <option value="needs_cleaning">Нужна уборка</option>
+                            <option value="needs_restock">Нужно пополнение</option>
+                        </select>
+                        <textarea placeholder="Комментарий..." rows="2"></textarea>
+                    </div>
+                    
+                    <div class="showcase-item">
+                        <h3>Склад</h3>
+                        <select class="showcase-status">
+                            <option value="">Состояние</option>
+                            <option value="organized">Упорядочено</option>
+                            <option value="messy">Беспорядок</option>
+                            <option value="needs_inventory">Нужна инвентаризация</option>
+                        </select>
+                        <textarea placeholder="Комментарий..." rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Секция 3: Фотоотчет -->
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-icon">📸</span>
+                    <h2>Фотоотчет</h2>
+                    <p class="section-subtitle">Обязательные фото для отчета</p>
+                </div>
+                
+                <div class="photo-requirements">
+                    <div class="requirement-item">
+                        <span class="req-icon">✅</span>
+                        <span>Касса (открытая/закрытая)</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="req-icon">✅</span>
+                        <span>Общий вид зала</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span class="req-icon">✅</span>
+                        <span>Состояние витрин</span>
+                    </div>
+                </div>
+                
+                <div class="photo-upload-grid">
+                    <div class="photo-upload-card" onclick="takePhoto('cash')">
+                        <div class="photo-upload-icon">➕</div>
+                        <p>Касса</p>
+                        <small>Обязательно</small>
+                    </div>
+                    
+                    <div class="photo-upload-card" onclick="takePhoto('main_showcase')">
+                        <div class="photo-upload-icon">➕</div>
+                        <p>Основная витрина</p>
+                        <small>Обязательно</small>
+                    </div>
+                    
+                    <div class="photo-upload-card" onclick="takePhoto('vip_showcase')">
+                        <div class="photo-upload-icon">➕</div>
+                        <p>VIP витрина</p>
+                        <small>Обязательно</small>
+                    </div>
+                    
+                    <div class="photo-upload-card" onclick="takePhoto('general_view')">
+                        <div class="photo-upload-icon">➕</div>
+                        <p>Общий вид</p>
+                        <small>Обязательно</small>
+                    </div>
+                    
+                    <div class="photo-upload-card" onclick="takePhoto('problems')">
+                        <div class="photo-upload-icon">➕</div>
+                        <p>Проблемные места</p>
+                        <small>Если есть</small>
+                    </div>
+                    
+                    <div class="photo-upload-card" onclick="takePhoto('other')">
+                        <div class="photo-upload-icon">➕</div>
+                        <p>Дополнительно</p>
+                        <small>По желанию</small>
+                    </div>
+                </div>
+                
+                <div id="photo-preview" class="photo-preview"></div>
+            </div>
+
+            <!-- Секция 4: Инциденты и замечания -->
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-icon">⚠️</span>
+                    <h2>Инциденты и замечания</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label>Проблемы в течение смены</label>
+                    <textarea id="incidents" placeholder="Опишите инциденты, поломки, конфликты..." rows="4"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Потери/брак</label>
+                    <textarea id="losses" placeholder="Укажите потери товара или брак..." rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Предложения по улучшению</label>
+                    <textarea id="suggestions" placeholder="Ваши идеи для улучшения работы..." rows="3"></textarea>
+                </div>
+            </div>
+
+            <!-- Кнопки отправки -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" onclick="saveDraft()">
+                    <span class="btn-icon">💾</span>
+                    Сохранить черновик
+                </button>
+                
+                <button type="button" class="btn btn-secondary" onclick="previewReport()">
+                    <span class="btn-icon">👁️</span>
+                    Предпросмотр
+                </button>
+                
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-icon">📤</span>
+                    Отправить отчет
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверка авторизации
+            if (!window.currentEmployee) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Устанавливаем дату
+            const now = new Date();
+            document.getElementById('report-date').textContent = 
+                now.toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    weekday: 'long'
+                });
+
+            // Устанавливаем сотрудника
+            document.getElementById('report-employee').textContent = 
+                window.currentEmployee.name;
+
+            // Обработка формы
+            document.getElementById('report-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitReport();
+            });
+
+            // Загрузка шаблона из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('template')) {
+                loadTemplate(urlParams.get('template'));
+            }
+        });
+
+        function submitReport() {
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                employee: window.currentEmployee,
+                location: window.currentEmployee.location,
+                shift: document.getElementById('shift-select').value,
+                finance: {
+                    cashStart: document.getElementById('cash-start').value,
+                    cashEnd: document.getElementById('cash-end').value,
+                    terminalAmount: document.getElementById('terminal-amount').value,
+                    terminalStatus: document.getElementById('terminal-status').value,
+                    discrepancies: document.getElementById('discrepancies').value
+                },
+                showcases: Array.from(document.querySelectorAll('.showcase-item')).map(item => ({
+                    name: item.querySelector('h3').textContent,
+                    status: item.querySelector('.showcase-status').value,
+                    comment: item.querySelector('textarea').value
+                })),
+                incidents: document.getElementById('incidents').value,
+                losses: document.getElementById('losses').value,
+                suggestions: document.getElementById('suggestions').value
+            };
+
+            // Отправка отчета
+            sendReportToTelegram(reportData);
+            
+            // Показываем уведомление
+            showSuccessNotification('Отчет успешно отправлен администратору Gallery 13');
+            
+            // Возвращаемся на дашборд через 2 секунды
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        }
+
+        function takePhoto(type) {
+            // Интеграция с камерой Telegram
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    title: 'Добавить фото',
+                    message: `Сделайте фото для: ${type}`,
+                    buttons: [
+                        { type: 'default', text: 'Сделать фото' },
+                        { type: 'cancel', text: 'Отмена' }
+                    ]
+                });
+            }
+            
+            // Для демо
+            addPhotoPlaceholder(type);
+        }
+
+        function addPhotoPlaceholder(type) {
+            const preview = document.getElementById('photo-preview');
+            const photoItem = document.createElement('div');
+            photoItem.className = 'preview-photo';
+            photoItem.innerHTML = `
+                <img src="https://via.placeholder.com/120/1e293b/8b5cf6?text=${encodeURIComponent(type)}" 
+                     alt="${type}">
+                <div class="photo-info">
+                    <strong>${type}</strong>
+                    <small>${new Date().toLocaleTimeString()}</small>
+                </div>
+                <button class="remove-photo" onclick="this.parentElement.remove()">✕</button>
+            `;
+            preview.appendChild(photoItem);
+        }
+
+        function saveDraft() {
+            alert('Черновик отчета сохранен локально');
+            // Реализация сохранения в localStorage
+        }
+
+        function loadTemplate(templateName = 'daily') {
+            const templates = {
+                daily: {
+                    shift: 'full',
+                    incidents: 'Инцидентов не было',
+                    suggestions: ''
+                },
+                open: {
+                    shift: 'day',
+                    incidents: '',
+                    suggestions: ''
+                },
+                close: {
+                    shift: 'evening',
+                    incidents: '',
+                    suggestions: ''
+                }
+            };
+            
+            const template = templates[templateName];
+            if (template) {
+                document.getElementById('shift-select').value = template.shift;
+                document.getElementById('incidents').value = template.incidents;
+                document.getElementById('suggestions').value = template.suggestions;
+                
+                showSuccessNotification(`Шаблон "${templateName}" загружен`);
+            }
+        }
+
+        function previewReport() {
+            // Показываем модальное окно с предпросмотром
+            alert('Функция предпросмотра в разработке');
+        }
+
+        function sendReportToTelegram(data) {
+            console.log('Отправка отчета в Telegram:', data);
+            // Реальная реализация через Telegram Bot API
+        }
+
+        function showSuccessNotification(message) {
+            // Создаем уведомление
+            const notification = document.createElement('div');
+            notification.className = 'success-notification';
+            notification.innerHTML = `
+                <span class="notification-icon">✅</span>
+                <span>${message}</span>
+            `;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--accent-green);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Удаляем через 3 секунды
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Добавляем стили для анимации
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
