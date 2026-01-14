@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Заказ канцелярии</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js" defer></script>
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header class="gallery-header">
+            <div class="header-left">
+                <button class="btn-icon back-btn" onclick="window.location.href='dashboard.html'">
+                    ←
+                </button>
+                <div class="gallery-brand">
+                    <span class="brand-icon">🖊️</span>
+                    <div>
+                        <h1>Канцелярия</h1>
+                        <p class="brand-subtitle">Заказ для всех точек</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn-icon" onclick="showCart()" title="Корзина">
+                    🛒<span class="cart-badge" id="cart-count">0</span>
+                </button>
+                <button class="btn-icon" onclick="showOrderHistory()" title="История заказов">
+                    📋
+                </button>
+            </div>
+        </header>
+
+        <!-- Выбор точки для заказа -->
+        <div class="card">
+            <h3>📍 Для какой точки заказываем?</h3>
+            <div class="location-selector">
+                <select id="order-location" onchange="updateLocationInfo()">
+                    <option value="">Выберите точку</option>
+                    <!-- Локации загружаются динамически -->
+                </select>
+                <div class="location-info" id="location-info" style="display: none;">
+                    <p><strong>Адрес:</strong> <span id="location-address"></span></p>
+                    <p><strong>Менеджер:</strong> <span id="location-manager"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Категории канцелярии -->
+        <div class="categories-scroll">
+            <div class="category-tabs" id="category-tabs">
+                <!-- Категории загружаются динамически -->
+            </div>
+        </div>
+
+        <!-- Поиск -->
+        <div class="search-container">
+            <div class="search-input">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="Поиск канцелярии..." 
+                       oninput="searchItems()">
+                <button class="btn-icon" onclick="clearSearch()" title="Очистить">✕</button>
+            </div>
+        </div>
+
+        <!-- Список товаров -->
+        <div class="section-title">
+            <h2 id="current-category">Все товары</h2>
+            <p id="category-description">Выберите категорию для заказа</p>
+        </div>
+
+        <div class="items-grid" id="items-grid">
+            <!-- Товары загружаются динамически -->
+        </div>
+
+        <!-- Корзина (модальное) -->
+        <div class="modal-overlay" id="cart-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🛒 Корзина заказов</h2>
+                    <button class="btn-icon" onclick="hideCart()">✕</button>
+                </div>
+                
+                <div class="cart-content" id="cart-content">
+                    <!-- Товары в корзине -->
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Всего товаров:</span>
+                        <span id="cart-total-items">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Общая сумма:</span>
+                        <span class="cart-total" id="cart-total-amount">0 ₽</span>
+                    </div>
+                </div>
+                
+                <div class="delivery-options">
+                    <h3>📦 Доставка</h3>
+                    <div class="option-group">
+                        <label class="option-item">
+                            <input type="radio" name="delivery" value="urgent" checked>
+                            <span class="option-label">
+                                <strong>Срочная доставка</strong>
+                                <small>Сегодня • 500 ₽</small>
+                            </span>
+                        </label>
+                        <label class="option-item">
+                            <input type="radio" name="delivery" value="standard">
+                            <span class="option-label">
+                                <strong>Стандартная</strong>
+                                <small>Завтра • 250 ₽</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="order-comment">
+                    <h3>📝 Комментарий к заказу</h3>
+                    <textarea id="order-comment" placeholder="Дополнительные пожелания..." rows="3"></textarea>
+                </div>
+                
+                <div class="cart-actions">
+                    <button class="btn btn-secondary" onclick="hideCart()">
+                        Продолжить покупки
+                    </button>
+                    <button class="btn btn-primary" onclick="submitOrder()">
+                        📨 Отправить заказ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрый заказ (плавающая кнопка) -->
+        <div class="floating-action">
+            <button class="fab-btn" onclick="showQuickOrder()">
+                <span class="fab-icon">⚡</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let currentCategory = 'all';
+        let searchQuery = '';
+        let stationeryItems = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверка авторизации
+            if (!window.currentEmployee) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Загружаем данные
+            loadLocations();
+            loadCategories();
+            loadStationeryItems();
+            loadCartFromStorage();
+            updateCartUI();
+        });
+
+        function loadLocations() {
+            const select = document.getElementById('order-location');
+            const locations = GALLERY13_CONFIG.locations;
+            
+            select.innerHTML = '<option value="">Выберите точку</option>';
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location.id;
+                option.textContent = location.name;
+                select.appendChild(option);
+            });
+            
+            // Автовыбор текущей локации сотрудника
+            if (window.currentEmployee && window.currentEmployee.location) {
+                select.value = window.currentEmployee.location;
+                updateLocationInfo();
+            }
+        }
+
+        function updateLocationInfo() {
+            const locationId = document.getElementById('order-location').value;
+            const location = GALLERY13_CONFIG.locations.find(l => l.id === locationId);
+            const infoDiv = document.getElementById('location-info');
+            
+            if (location) {
+                document.getElementById('location-address').textContent = location.address;
+                document.getElementById('location-manager').textContent = location.manager;
+                infoDiv.style.display = 'block';
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        }
+
+        function loadCategories() {
+            const categories = GALLERY13_CONFIG.stationeryCategories;
+            const container = document.getElementById('category-tabs');
+            container.innerHTML = '';
+
+            // Вкладка "Все товары"
+            const allTab = document.createElement('div');
+            allTab.className = `category-tab ${currentCategory === 'all' ? 'active' : ''}`;
+            allTab.innerHTML = '<span class="category-icon">📦</span><span>Все товары</span>';
+            allTab.addEventListener('click', () => selectCategory('all'));
+            container.appendChild(allTab);
+
+            // Категории из конфига
+            categories.forEach(category => {
+                const tab = document.createElement('div');
+                tab.className = `category-tab ${currentCategory === category.id ? 'active' : ''}`;
+                tab.innerHTML = `
+                    <span class="category-icon">${category.icon}</span>
+                    <span>${category.name}</span>
+                `;
+                tab.addEventListener('click', () => selectCategory(category.id));
+                container.appendChild(tab);
+            });
+        }
+
+        function loadStationeryItems() {
+            // Товары для канцелярии
+            stationeryItems = [
+                {
+                    id: 1,
+                    name: 'Бумага А4',
+                    description: 'Офисная бумага 80г/м², 500 листов',
+                    category: 'paper',
+                    price: 450,
+                    unit: 'пачка',
+                    stock: 8,
+                    minOrder: 1,
+                    image: '📄'
+                },
+                {
+                    id: 2,
+                    name: 'Шариковые ручки',
+                    description: 'Набор синих ручек, 10 шт',
+                    category: 'pens',
+                    price: 120,
+                    unit: 'набор',
+                    stock: 25,
+                    minOrder: 1,
+                    image: '🖊️'
+                },
+                {
+                    id: 3,
+                    name: 'Папки-регистраторы',
+                    description: 'Папки для документов, 5 шт',
+                    category: 'folders',
+                    price: 350,
+                    unit: 'набор',
+                    stock: 6,
+                    minOrder: 1,
+                    image: '📁'
+                },
+                {
+                    id: 4,
+                    name: 'Степлер и скобы',
+                    description: 'Степлер + 1000 скоб',
+                    category: 'office',
+                    price: 280,
+                    unit: 'комплект',
+                    stock: 4,
+                    minOrder: 1,
+                    image: '📎'
+                },
+                {
+                    id: 5,
+                    name: 'Вода питьевая',
+                    description: 'Бутилированная вода 19л',
+                    category: 'beverages',
+                    price: 250,
+                    unit: 'бутыль',
+                    stock: 15,
+                    minOrder: 1,
+                    image: '💧'
+                },
+                {
+                    id: 6,
+                    name: 'Кофе молотый',
+                    description: 'Арабика, 1 кг',
+                    category: 'beverages',
+                    price: 1200,
+                    unit: 'кг',
+                    stock: 3,
+                    minOrder: 1,
+                    image: '☕'
+                }
+            ];
+
+            displayItems(stationeryItems);
+        }
+
+        function selectCategory(categoryId) {
+            currentCategory = categoryId;
+            
+            // Обновляем активную вкладку
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                if ((categoryId === 'all' && tab.textContent.includes('Все товары')) ||
+                    tab.textContent.includes(getCategoryName(categoryId))) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Обновляем заголовок
+            document.getElementById('current-category').textContent = getCategoryName(categoryId);
+            document.getElementById('category-description').textContent = getCategoryDescription(categoryId);
+            
+            // Фильтруем товары
+            filterItems();
+        }
+
+        function filterItems() {
+            let filteredItems = [...stationeryItems];
+            
+            // Фильтр по категории
+            if (currentCategory !== 'all') {
+                filteredItems = filteredItems.filter(item => item.category === currentCategory);
+            }
+            
+            // Фильтр по поиску
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                filteredItems = filteredItems.filter(item => 
+                    item.name.toLowerCase().includes(query) ||
+                    item.description.toLowerCase().includes(query)
+                );
+            }
+            
+            displayItems(filteredItems);
+        }
+
+        function displayItems(items) {
+            const container = document.getElementById('items-grid');
+            
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>Товары не найдены</h3>
+                        <p>Попробуйте изменить поиск или выбрать другую категорию</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            items.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = `item-card ${item.stock === 0 ? 'out-of-stock' : ''}`;
+                
+                itemEl.innerHTML = `
+                    <div class="item-image">${item.image}</div>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-description">${item.description}</div>
+                        <div class="item-specs">
+                            <div class="spec-item">
+                                <span>📦</span>
+                                <span>${item.unit}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span>🏪</span>
+                                <span>${item.stock} в наличии</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-footer">
+                        <div class="item-price">
+                            ${item.price} ₽
+                            <small>/${item.unit}</small>
+                        </div>
+                        <div class="item-actions">
+                            ${item.stock > 0 ? `
+                                <div class="quantity-control">
+                                    <button class="quantity-btn" onclick="adjustItemQuantity(${item.id}, -1)">−</button>
+                                    <input type="number" class="quantity-input" id="qty-${item.id}" 
+                                           value="1" min="1" max="${item.stock}" 
+                                           onchange="updateItemQuantity(${item.id}, this.value)">
+                                    <button class="quantity-btn" onclick="adjustItemQuantity(${item.id}, 1)">+</button>
+                                </div>
+                                <button class="add-to-cart" onclick="addToCart(${item.id})">
+                                    +
+                                </button>
+                            ` : `
+                                <span class="out-of-stock-text">Нет в наличии</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(itemEl);
+            });
+        }
+
+        function searchItems() {
+            searchQuery = document.getElementById('search-input').value.trim();
+            filterItems();
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            searchQuery = '';
+            filterItems();
+        }
+
+        // Корзина
+        function addToCart(itemId) {
+            const location = document.getElementById('order-location').value;
+            if (!location) {
+                alert('Сначала выберите точку для заказа!');
+                return;
+            }
+            
+            const item = stationeryItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            const quantityInput = document.getElementById(`qty-${itemId}`);
+            const quantity = parseInt(quantityInput.value) || 1;
+            
+            if (quantity > item.stock) {
+                alert(`Максимально доступное количество: ${item.stock}`);
+                quantityInput.value = item.stock;
+                return;
+            }
+            
+            const existingItem = cart.find(i => i.id === itemId && i.location === location);
+            
+            if (existingItem) {
+                if (existingItem.quantity + quantity > item.stock) {
+                    alert(`Нельзя добавить больше ${item.stock} единиц этого товара`);
+                    return;
+                }
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    ...item,
+                    quantity: quantity,
+                    location: location,
+                    addedAt: new Date().toISOString()
+                });
+            }
+            
+            saveCartToStorage();
+            updateCartUI();
+            showNotification('✅ Товар добавлен в корзину');
+            quantityInput.value = 1;
+        }
+
+        function showCart() {
+            const location = document.getElementById('order-location').value;
+            if (!location) {
+                alert('Сначала выберите точку для заказа!');
+                return;
+            }
+            
+            updateCartModal();
+            document.getElementById('cart-modal').style.display = 'flex';
+        }
+
+        function submitOrder() {
+            const location = document.getElementById('order-location').value;
+            if (!location) {
+                alert('Выберите точку для заказа!');
+                return;
+            }
+            
+            if (cart.length === 0) {
+                alert('Корзина пуста!');
+                return;
+            }
+            
+            const delivery = document.querySelector('input[name="delivery"]:checked').value;
+            const comment = document.getElementById('order-comment').value;
+            
+            const orderData = {
+                items: cart.filter(item => item.location === location),
+                location: location,
+                delivery: delivery,
+                comment: comment,
+                employee: window.currentEmployee,
+                timestamp: new Date().toISOString(),
+                status: 'new'
+            };
+            
+            // Отправка заказа
+            sendOrderToTelegram(orderData);
+            
+            // Отправка уведомления админу
+            ConfigManager.sendAdminNotification('new_order', {
+                location: GALLERY13_CONFIG.locations.find(l => l.id === location)?.name,
+                itemsCount: orderData.items.length,
+                total: orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                employee: window.currentEmployee.name
+            });
+            
+            // Очищаем корзину для этой локации
+            cart = cart.filter(item => item.location !== location);
+            saveCartToStorage();
+            updateCartUI();
+            
+            // Показываем подтверждение
+            showNotification('✅ Заказ отправлен! Администратор уведомлен.');
+            hideCart();
+        }
+
+        function saveCartToStorage() {
+            localStorage.setItem('gallery13_cart', JSON.stringify(cart));
+        }
+
+        function loadCartFromStorage() {
+            const saved = localStorage.getItem('gallery13_cart');
+            if (saved) {
+                try {
+                    cart = JSON.parse(saved);
+                } catch (e) {
+                    cart = [];
+                }
+            }
+        }
+
+        function updateCartUI() {
+            const location = document.getElementById('order-location').value;
+            const locationItems = location ? cart.filter(item => item.location === location) : [];
+            const totalItems = locationItems.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = totalItems || '';
+        }
+
+        // Вспомогательные функции
+        function getCategoryName(id) {
+            if (id === 'all') return 'Все товары';
+            const category = GALLERY13_CONFIG.stationeryCategories.find(c => c.id === id);
+            return category ? category.name : id;
+        }
+
+        function getCategoryDescription(id) {
+            if (id === 'all') return 'Все доступные товары для заказа';
+            const desc = {
+                paper: 'Бумага и бумажная продукция',
+                pens: 'Письменные принадлежности',
+                folders: 'Папки и системы архивации',
+                office: 'Офисные принадлежности',
+                beverages: 'Напитки для сотрудников',
+                other: 'Разные товары'
+            };
+            return desc[id] || 'Выберите категорию для просмотра товаров';
+        }
+    </script>
+</body>
+</html>

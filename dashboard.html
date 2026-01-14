@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery 13 | Панель управления</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js" defer></script>
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка Gallery 13 -->
+        <header class="gallery-header">
+            <div class="header-left">
+                <button class="btn-icon back-btn" onclick="window.location.href='index.html'">
+                    🏠
+                </button>
+                <div class="gallery-brand">
+                    <span class="brand-icon">🖼️</span>
+                    <div>
+                        <h1>Gallery 13</h1>
+                        <p class="brand-subtitle">Control Panel</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <span id="user-avatar">👤</span>
+                </div>
+                <button class="btn-icon" id="notifications-btn" title="Уведомления">
+                    🔔<span class="notification-badge" id="notification-count">0</span>
+                </button>
+                <button class="btn-icon" id="logout-btn" title="Выйти">
+                    🚪
+                </button>
+            </div>
+        </header>
+
+        <!-- Уведомления (модальное) -->
+        <div class="modal-overlay" id="notifications-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🔔 Уведомления</h2>
+                    <button class="btn-icon" onclick="hideNotifications()">✕</button>
+                </div>
+                <div class="notifications-list" id="notifications-list">
+                    <!-- Уведомления загружаются динамически -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация о сотруднике -->
+        <div class="employee-card">
+            <div class="employee-info">
+                <h3 id="employee-name"></h3>
+                <div class="employee-details">
+                    <span class="badge role-badge" id="employee-role"></span>
+                    <span class="location-tag" id="employee-location"></span>
+                </div>
+                <p class="employee-position" id="employee-position"></p>
+            </div>
+            <div class="current-time">
+                <span id="current-time"></span>
+                <small id="current-date"></small>
+            </div>
+        </div>
+
+        <!-- Управление точками (только для админов) -->
+        <div class="card" id="locations-management" style="display: none;">
+            <div class="section-header">
+                <h3>📍 Управление точками</h3>
+                <button class="btn-icon" onclick="showAddLocationForm()">➕</button>
+            </div>
+            <div class="locations-list" id="locations-list">
+                <!-- Точки загружаются динамически -->
+            </div>
+        </div>
+
+        <!-- Основной функционал -->
+        <div class="section-title">
+            <h2>⚡ Основные функции</h2>
+            <p>Управление Gallery 13</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Отчет -->
+            <div class="feature-card gradient-purple" id="report-card">
+                <div class="feature-icon">📊</div>
+                <h3>Суточный отчет</h3>
+                <p>Касса, витрины, состояние</p>
+            </div>
+
+            <!-- Анонимные жалобы -->
+            <div class="feature-card gradient-blue" id="complaints-card">
+                <div class="feature-icon">🕵️</div>
+                <h3>Анонимные обращения</h3>
+                <p>Только для администрации</p>
+                <div class="notification-badge" id="complaints-count">0</div>
+            </div>
+
+            <!-- Канцелярия -->
+            <div class="feature-card gradient-green" id="stationery-card">
+                <div class="feature-icon">🖊️</div>
+                <h3>Канцелярия</h3>
+                <p>Заказ для всех точек</p>
+            </div>
+
+            <!-- Общий чат -->
+            <div class="feature-card gradient-orange" id="chat-card">
+                <div class="feature-icon">💬</div>
+                <h3>Командный чат</h3>
+                <p>Общение с фото</p>
+            </div>
+
+            <!-- Управление сотрудниками -->
+            <div class="feature-card gradient-red" id="employees-card">
+                <div class="feature-icon">👥</div>
+                <h3>Команда</h3>
+                <p>Управление доступом</p>
+            </div>
+
+            <!-- Статистика -->
+            <div class="feature-card gradient-teal" id="stats-card">
+                <div class="feature-icon">📈</div>
+                <h3>Статистика</h3>
+                <p>Отчеты и аналитика</p>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="section-title">
+            <h2>🚀 Быстрые действия</h2>
+            <p>Часто используемые функции</p>
+        </div>
+
+        <div class="quick-actions-grid">
+            <button class="quick-action-btn" onclick="sendQuickReport('open')">
+                <span class="action-icon">🔓</span>
+                Открытие смены
+            </button>
+            
+            <button class="quick-action-btn" onclick="sendQuickReport('close')">
+                <span class="action-icon">🔒</span>
+                Закрытие смены
+            </button>
+            
+            <button class="quick-action-btn" onclick="window.location.href='stationery.html?item=water'">
+                <span class="action-icon">💧</span>
+                Заказать воду
+            </button>
+            
+            <button class="quick-action-btn" onclick="window.location.href='report.html?template=daily'">
+                <span class="action-icon">📋</span>
+                Дневной отчет
+            </button>
+        </div>
+    </div>
+
+    <!-- Форма добавления точки (модальное) -->
+    <div class="modal-overlay" id="add-location-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📍 Добавить новую точку</h2>
+                <button class="btn-icon" onclick="hideAddLocationForm()">✕</button>
+            </div>
+            <form id="add-location-form">
+                <div class="form-group">
+                    <label>Название точки *</label>
+                    <input type="text" id="location-name" placeholder="Например: Gallery 13 - Центральный" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Адрес *</label>
+                    <input type="text" id="location-address" placeholder="Полный адрес" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" id="location-phone" placeholder="+7 (XXX) XXX-XX-XX">
+                </div>
+                
+                <div class="form-group">
+                    <label>Ответственный</label>
+                    <input type="text" id="location-manager" placeholder="ФИО менеджера">
+                </div>
+                
+                <div class="form-group">
+                    <label>Тип точки</label>
+                    <select id="location-type">
+                        <option value="main">Основной зал</option>
+                        <option value="office">Офис</option>
+                        <option value="showroom">Шоурум</option>
+                        <option value="storage">Склад</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddLocationForm()">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        ➕ Добавить точку
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверка авторизации
+            if (!window.currentEmployee) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const employee = window.currentEmployee;
+            
+            // Заполняем информацию о сотруднике
+            document.getElementById('employee-name').textContent = employee.name;
+            document.getElementById('employee-role').textContent = 
+                GALLERY13_CONFIG.roles[employee.role];
+            document.getElementById('employee-position').textContent = 
+                employee.position || employee.role;
+            
+            // Находим название локации
+            const location = GALLERY13_CONFIG.locations.find(l => l.id === employee.location);
+            document.getElementById('employee-location').textContent = 
+                location ? location.name : employee.location;
+
+            // Устанавливаем аватар по роли
+            const avatars = {
+                admin: '👨‍💼',
+                assistant: '👩‍💼',
+                manager: '👔',
+                cashier: '💰',
+                consultant: '💁'
+            };
+            document.getElementById('user-avatar').textContent = avatars[employee.role] || '👤';
+
+            // Обновляем время
+            function updateTime() {
+                const now = new Date();
+                document.getElementById('current-time').textContent = 
+                    now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('current-date').textContent = 
+                    now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+
+            // Проверка прав доступа
+            const permissions = GALLERY13_CONFIG.permissions[employee.role];
+            
+            // Показываем управление точками только админам
+            if (permissions.includes('manage_locations')) {
+                document.getElementById('locations-management').style.display = 'block';
+                loadLocationsList();
+            }
+            
+            // Скрываем недоступные функции
+            if (!permissions.includes('report')) {
+                document.getElementById('report-card').style.display = 'none';
+            }
+            if (!permissions.includes('complaints')) {
+                document.getElementById('complaints-card').style.display = 'none';
+            }
+            if (!permissions.includes('manage_employees')) {
+                document.getElementById('employees-card').style.display = 'none';
+            }
+
+            // Назначение обработчиков
+            document.getElementById('report-card').addEventListener('click', () => {
+                window.location.href = 'report.html';
+            });
+            
+            document.getElementById('complaints-card').addEventListener('click', () => {
+                window.location.href = 'anonymous.html';
+            });
+            
+            document.getElementById('stationery-card').addEventListener('click', () => {
+                window.location.href = 'stationery.html';
+            });
+            
+            document.getElementById('chat-card').addEventListener('click', () => {
+                window.location.href = 'chat.html';
+            });
+            
+            document.getElementById('employees-card').addEventListener('click', () => {
+                window.location.href = 'employees.html';
+            });
+            
+            document.getElementById('stats-card').addEventListener('click', () => {
+                showStatistics();
+            });
+
+            // Уведомления
+            document.getElementById('notifications-btn').addEventListener('click', showNotifications);
+            updateNotificationCount();
+
+            // Выход
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                if (confirm('Вы действительно хотите выйти из системы?')) {
+                    window.currentEmployee = null;
+                    localStorage.removeItem('gallery13_employee');
+                    window.location.href = 'index.html';
+                }
+            });
+
+            // Форма добавления точки
+            document.getElementById('add-location-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addNewLocation();
+            });
+        });
+
+        function loadLocationsList() {
+            const container = document.getElementById('locations-list');
+            const locations = GALLERY13_CONFIG.locations;
+            
+            if (locations.length === 0) {
+                container.innerHTML = '<p class="hint">Точки не добавлены</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            locations.forEach(location => {
+                const locationEl = document.createElement('div');
+                locationEl.className = 'location-item';
+                locationEl.innerHTML = `
+                    <div class="location-item-info">
+                        <strong>${location.name}</strong>
+                        <small>${location.address}</small>
+                    </div>
+                    <div class="location-item-actions">
+                        <button class="btn-icon" onclick="editLocation('${location.id}')" title="Редактировать">
+                            ✏️
+                        </button>
+                        <button class="btn-icon" onclick="deleteLocation('${location.id}')" title="Удалить">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                container.appendChild(locationEl);
+            });
+        }
+
+        function showAddLocationForm() {
+            document.getElementById('add-location-modal').style.display = 'flex';
+        }
+
+        function hideAddLocationForm() {
+            document.getElementById('add-location-modal').style.display = 'none';
+            document.getElementById('add-location-form').reset();
+        }
+
+        function addNewLocation() {
+            const locationData = {
+                name: document.getElementById('location-name').value,
+                address: document.getElementById('location-address').value,
+                phone: document.getElementById('location-phone').value || '',
+                manager: document.getElementById('location-manager').value || '',
+                type: document.getElementById('location-type').value
+            };
+
+            // Добавляем точку через ConfigManager
+            const newLocation = ConfigManager.addLocation(locationData);
+            
+            if (newLocation) {
+                showNotification('✅ Новая точка добавлена!');
+                hideAddLocationForm();
+                loadLocationsList();
+            }
+        }
+
+        function editLocation(locationId) {
+            const location = GALLERY13_CONFIG.locations.find(l => l.id === locationId);
+            if (!location) return;
+            
+            // Заполняем форму
+            document.getElementById('location-name').value = location.name;
+            document.getElementById('location-address').value = location.address;
+            document.getElementById('location-phone').value = location.phone || '';
+            document.getElementById('location-manager').value = location.manager || '';
+            document.getElementById('location-type').value = location.type || 'main';
+            
+            // Показываем форму
+            document.getElementById('add-location-modal').style.display = 'flex';
+            
+            // TODO: Добавить логику обновления
+        }
+
+        function deleteLocation(locationId) {
+            if (confirm('Удалить эту точку? Это действие нельзя отменить.')) {
+                if (ConfigManager.deleteLocation(locationId)) {
+                    showNotification('🗑️ Точка удалена');
+                    loadLocationsList();
+                }
+            }
+        }
+
+        function showNotifications() {
+            const notifications = ConfigManager.getNotifications();
+            const container = document.getElementById('notifications-list');
+            
+            if (notifications.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔔</div>
+                        <h3>Уведомлений нет</h3>
+                        <p>Здесь будут появляться важные уведомления</p>
+                    </div>
+                `;
+            } else {
+                let html = '';
+                notifications.forEach(notif => {
+                    const type = GALLERY13_CONFIG.notificationTypes[notif.type] || notif.type;
+                    const time = new Date(notif.timestamp).toLocaleTimeString('ru-RU', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    html += `
+                        <div class="notification-item">
+                            <div class="notification-header">
+                                <span class="notification-type">${type}</span>
+                                <span class="notification-time">${time}</span>
+                            </div>
+                            <div class="notification-content">
+                                ${JSON.stringify(notif.data, null, 2)}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+            
+            document.getElementById('notifications-modal').style.display = 'flex';
+        }
+
+        function hideNotifications() {
+            document.getElementById('notifications-modal').style.display = 'none';
+        }
+
+        function updateNotificationCount() {
+            const notifications = ConfigManager.getNotifications();
+            const newNotifications = notifications.filter(n => 
+                new Date(n.timestamp) > new Date(Date.now() - 24 * 60 * 60 * 1000) // За последние 24 часа
+            );
+            document.getElementById('notification-count').textContent = newNotifications.length || '';
+        }
+
+        function sendQuickReport(type) {
+            const reports = {
+                'open': 'Отчет об открытии смены',
+                'close': 'Отчет о закрытии смены'
+            };
+            
+            if (confirm(`Отправить ${reports[type]}?`)) {
+                // Отправка быстрого отчета
+                const reportData = {
+                    type: type,
+                    employee: window.currentEmployee,
+                    timestamp: new Date().toISOString(),
+                    location: window.currentEmployee.location
+                };
+                
+                // Отправляем уведомление админу
+                ConfigManager.sendAdminNotification('new_report', {
+                    type: reports[type],
+                    employee: window.currentEmployee.name,
+                    location: GALLERY13_CONFIG.locations.find(l => l.id === window.currentEmployee.location)?.name
+                });
+                
+                showNotification(`✅ ${reports[type]} отправлен`);
+            }
+        }
+
+        function showStatistics() {
+            // Простая статистика
+            const stats = {
+                totalLocations: GALLERY13_CONFIG.locations.length,
+                totalEmployees: EMPLOYEES_DB.length,
+                activeEmployees: EMPLOYEES_DB.filter(e => e.status === 'active').length,
+                today: new Date().toLocaleDateString('ru-RU')
+            };
+            
+            alert(`📊 Статистика Gallery 13\n\nТочки: ${stats.totalLocations}\nСотрудники: ${stats.totalEmployees} (активных: ${stats.activeEmployees})\nДата: ${stats.today}`);
+        }
+    </script>
+</body>
+</html>
